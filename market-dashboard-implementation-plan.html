@@ -1,0 +1,733 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Market Dashboard — Implementation Plan</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1f2328;
+    background: #ffffff;
+    padding: 40px 20px 60px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ── */
+  .header {
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 20px;
+    margin-bottom: 32px;
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #57606a;
+    margin-bottom: 6px;
+  }
+  .header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1f2328;
+    margin-bottom: 8px;
+  }
+  .header-meta {
+    font-size: 13px;
+    color: #57606a;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .header-meta span { display: flex; align-items: center; gap: 5px; }
+  .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #3b82d4;
+  }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 36px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #57606a;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 6px;
+    margin-bottom: 16px;
+  }
+  .section-number {
+    display: inline-block;
+    background: #3b82d4;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 3px;
+    padding: 1px 6px;
+    margin-right: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Folder Tree ── */
+  .tree {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 16px 20px;
+    font-family: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: #1f2328;
+    overflow-x: auto;
+  }
+  .tree .dir { color: #3b82d4; font-weight: 600; }
+  .tree .comment { color: #57606a; font-style: italic; }
+  .tree .file { color: #1f2328; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  th {
+    background: #f7f8fa;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    color: #57606a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  td {
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f7f8fa; }
+  td code, th code {
+    font-family: "SFMono-Regular", "Consolas", monospace;
+    font-size: 11.5px;
+    background: #eef0f3;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #1f2328;
+  }
+
+  /* ── Code block ── */
+  pre {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 14px 18px;
+    font-family: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-x: auto;
+    color: #1f2328;
+    margin-top: 8px;
+  }
+  pre .kw  { color: #7c5cd8; font-weight: 600; }
+  pre .str { color: #0a7c3e; }
+  pre .cmt { color: #57606a; font-style: italic; }
+  pre .type { color: #3b82d4; }
+
+  /* ── Diagram ── */
+  .diagram {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 24px 20px;
+    text-align: center;
+    overflow-x: auto;
+  }
+  .diagram svg { max-width: 100%; height: auto; }
+
+  /* ── Cards row ── */
+  .card-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .card {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .card-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #57606a;
+    margin-bottom: 4px;
+  }
+  .card-value {
+    font-size: 13px;
+    color: #1f2328;
+    font-weight: 500;
+  }
+
+  /* ── Tiers ── */
+  .tier-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .tier {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+  .tier-badge {
+    flex-shrink: 0;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: #3b82d4;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tier-body { flex: 1; }
+  .tier-heading {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+  .tier-desc { font-size: 12.5px; color: #57606a; }
+
+  /* ── Steps ── */
+  .steps {
+    counter-reset: step;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .step {
+    display: flex;
+    gap: 0;
+    position: relative;
+  }
+  .step-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 32px;
+    flex-shrink: 0;
+  }
+  .step-num {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: #3b82d4;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .step-line {
+    width: 2px;
+    flex: 1;
+    background: #e5e7eb;
+    margin-top: 2px;
+    min-height: 24px;
+  }
+  .step:last-child .step-line { display: none; }
+  .step-content {
+    padding: 0 0 20px 12px;
+    flex: 1;
+  }
+  .step-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+  .step-body { font-size: 12.5px; color: #57606a; }
+  code.inline {
+    font-family: "SFMono-Regular", "Consolas", monospace;
+    font-size: 11.5px;
+    background: #eef0f3;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #1f2328;
+  }
+
+  /* ── Note box ── */
+  .note {
+    background: #f0f6ff;
+    border-left: 3px solid #3b82d4;
+    border-radius: 0 6px 6px 0;
+    padding: 12px 16px;
+    font-size: 12.5px;
+    color: #1f2328;
+    margin-top: 10px;
+  }
+  .note strong { color: #3b82d4; }
+
+  /* ── SDLC flow ── */
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    align-items: center;
+    margin-top: 8px;
+  }
+  .flow-item {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 5px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #1f2328;
+    white-space: nowrap;
+  }
+  .flow-arrow {
+    color: #57606a;
+    font-size: 16px;
+    padding: 0 4px;
+    line-height: 1;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 48px;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 14px;
+    text-align: center;
+    font-size: 11.5px;
+    color: #57606a;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  
+  <div class="header">
+    <div class="header-eyebrow">IBM Bob · GitHub SDLC Lab</div>
+    <h1>Market Dashboard — Implementation Plan</h1>
+    <div class="header-meta">
+      <span><span class="dot"></span> React + TypeScript + Vite</span>
+      <span><span class="dot"></span> Yahoo Finance (yahoo-finance2)</span>
+      <span><span class="dot"></span> IBM · MSFT · ORCL · SAP · CRM</span>
+      <span><span class="dot"></span> 3 time-window views</span>
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title"><span class="section-number">0</span>Starting-Point Assessment</div>
+    <div class="tier-list">
+      <div class="tier">
+        <div class="tier-badge">✓</div>
+        <div class="tier-body">
+          <div class="tier-heading">finance-app/ directory is intentionally empty</div>
+          <div class="tier-desc">The repo is a workshop scaffold. The application is generated from scratch by Bob in Part 1 of the workshop.</div>
+        </div>
+      </div>
+      <div class="tier">
+        <div class="tier-badge">✓</div>
+        <div class="tier-body">
+          <div class="tier-heading">CI pipeline already defined</div>
+          <div class="tier-desc"><code class="inline">.github/workflows/finance-app-ci.yml</code> expects <code class="inline">npm install</code>, <code class="inline">npm run lint</code>, <code class="inline">npm test</code>, <code class="inline">npm run build</code> from inside <code class="inline">finance-app/</code>.</div>
+        </div>
+      </div>
+      <div class="tier">
+        <div class="tier-badge">✓</div>
+        <div class="tier-body">
+          <div class="tier-heading">PR template and feature request example provided</div>
+          <div class="tier-desc">Phase 2 feature (user-selected ticker) must not break the fixed IBM+competitors dashboards — the acceptance criteria are already documented in <code class="inline">docs/pr-feature-request-example.md</code>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title"><span class="section-number">1</span>Source Folder Layout</div>
+    <div class="tree">
+<span class="dir">finance-app/</span>
+├── <span class="dir">public/</span>
+├── <span class="dir">src/</span>
+│   ├── <span class="dir">components/</span>
+│   │   ├── <span class="dir">layout/</span>        <span class="comment"># AppShell, Header, TimeWindowTabs</span>
+│   │   ├── <span class="dir">dashboard/</span>     <span class="comment"># DashboardPage, CompanyCard, ComparisonPanel</span>
+│   │   └── <span class="dir">charts/</span>        <span class="comment"># PriceLineChart, AreaChart, SummaryCard</span>
+│   ├── <span class="dir">services/</span>
+│   │   ├── <span class="file">financeService.ts</span>       <span class="comment"># public API: getQuote, getHistory</span>
+│   │   ├── <span class="file">yahooFinanceAdapter.ts</span>  <span class="comment"># yahoo-finance2 + normalization</span>
+│   │   └── <span class="file">mockData.ts</span>             <span class="comment"># static fixtures for CI / offline</span>
+│   ├── <span class="dir">hooks/</span>
+│   │   ├── <span class="file">useQuote.ts</span>             <span class="comment"># single ticker, current day</span>
+│   │   └── <span class="file">useHistory.ts</span>           <span class="comment"># ticker + window → normalized series</span>
+│   ├── <span class="dir">store/</span>
+│   │   └── <span class="file">dashboardStore.ts</span>       <span class="comment"># Zustand (tickers, window, errors)</span>
+│   ├── <span class="dir">types/</span>
+│   │   └── <span class="file">finance.ts</span>              <span class="comment"># Quote, HistoryPoint, TimeWindow, Ticker</span>
+│   ├── <span class="dir">utils/</span>
+│   │   └── <span class="file">normalizeQuote.ts</span>
+│   ├── <span class="file">constants.ts</span>                <span class="comment"># DEFAULT_TICKERS, TIME_WINDOWS</span>
+│   ├── <span class="file">App.tsx</span>
+│   └── <span class="file">main.tsx</span>
+├── <span class="dir">src/__tests__/</span>
+│   ├── <span class="dir">services/</span>
+│   ├── <span class="dir">hooks/</span>
+│   └── <span class="dir">components/</span>
+├── <span class="file">.eslintrc.cjs</span>
+├── <span class="file">vite.config.ts</span>
+├── <span class="file">jest.config.ts</span>
+├── <span class="file">tsconfig.json</span>
+└── <span class="file">package.json</span>
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title"><span class="section-number">2</span>React Component Boundaries</div>
+    <div class="diagram">
+      <svg xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'Segoe UI',system-ui,sans-serif" font-size="12">
+        
+        <rect x="290" y="10" width="120" height="32" rx="5" fill="#3b82d4"></rect>
+        <text x="350" y="31" text-anchor="middle" fill="#fff" font-weight="600">App</text>
+        <line x1="350" y1="42" x2="350" y2="58" stroke="#e5e7eb" stroke-width="1.5"></line>
+
+        
+        <rect x="270" y="58" width="160" height="32" rx="5" fill="#3b82d4"></rect>
+        <text x="350" y="79" text-anchor="middle" fill="#fff" font-weight="600">AppShell</text>
+
+        
+        <line x1="350" y1="90" x2="350" y2="106" stroke="#e5e7eb" stroke-width="1.5"></line>
+        <line x1="120" y1="106" x2="580" y2="106" stroke="#e5e7eb" stroke-width="1.5"></line>
+        <line x1="120" y1="106" x2="120" y2="122" stroke="#e5e7eb" stroke-width="1.5"></line>
+        <line x1="350" y1="106" x2="350" y2="122" stroke="#e5e7eb" stroke-width="1.5"></line>
+        <line x1="580" y1="106" x2="580" y2="122" stroke="#e5e7eb" stroke-width="1.5"></line>
+
+        
+        <rect x="50" y="122" width="140" height="30" rx="5" fill="#7c5cd8"></rect>
+        <text x="120" y="142" text-anchor="middle" fill="#fff">Header</text>
+
+        
+        <rect x="270" y="122" width="160" height="30" rx="5" fill="#7c5cd8"></rect>
+        <text x="350" y="142" text-anchor="middle" fill="#fff">TimeWindowTabs</text>
+
+        
+        <rect x="500" y="122" width="160" height="30" rx="5" fill="#3b82d4"></rect>
+        <text x="580" y="142" text-anchor="middle" fill="#fff" font-weight="600">DashboardPage</text>
+
+        
+        <line x1="580" y1="152" x2="580" y2="168" stroke="#e5e7eb" stroke-width="1.5"></line>
+        <line x1="440" y1="168" x2="700" y2="168" stroke="#e5e7eb" stroke-width="1.5"></line>
+        <line x1="440" y1="168" x2="440" y2="184" stroke="#e5e7eb" stroke-width="1.5"></line>
+        <line x1="580" y1="168" x2="580" y2="184" stroke="#e5e7eb" stroke-width="1.5"></line>
+        
+
+        
+        <rect x="360" y="184" width="160" height="30" rx="5" fill="#7c5cd8"></rect>
+        <text x="440" y="199" text-anchor="middle" fill="#fff">ComparisonPanel</text>
+        <line x1="440" y1="214" x2="440" y2="230" stroke="#e5e7eb" stroke-width="1.5"></line>
+
+        
+        <rect x="510" y="184" width="140" height="30" rx="5" fill="#7c5cd8"></rect>
+        <text x="580" y="199" text-anchor="middle" fill="#fff">CompanyCard</text>
+        <line x1="580" y1="214" x2="580" y2="230" stroke="#e5e7eb" stroke-width="1.5"></line>
+
+        
+        <rect x="360" y="230" width="160" height="30" rx="5" fill="#f7f8fa" stroke="#e5e7eb"></rect>
+        <text x="440" y="250" text-anchor="middle" fill="#57606a">PriceLineChart</text>
+
+        
+        <rect x="510" y="230" width="140" height="30" rx="5" fill="#f7f8fa" stroke="#e5e7eb"></rect>
+        <text x="580" y="250" text-anchor="middle" fill="#57606a">SummaryCard</text>
+
+        
+        <rect x="5" y="184" width="180" height="30" rx="5" fill="#f7f8fa" stroke="#e5e7eb"></rect>
+        <text x="95" y="199" text-anchor="middle" fill="#57606a">UserTickerPanel</text>
+        <text x="95" y="212" text-anchor="middle" fill="#57606a" font-size="10">(Phase 2)</text>
+
+        
+        <rect x="2" y="270" width="10" height="10" rx="2" fill="#f7f8fa" stroke="#e5e7eb"></rect>
+        <text x="17" y="280" fill="#57606a" font-size="11">Pure presenter — no fetch calls</text>
+        <rect x="2" y="288" width="10" height="10" rx="2" fill="#7c5cd8"></rect>
+        <text x="17" y="298" fill="#57606a" font-size="11">Container / orchestrator</text>
+        <rect x="2" y="306" width="10" height="10" rx="2" fill="#3b82d4"></rect>
+        <text x="17" y="316" fill="#57606a" font-size="11">App shell / page</text>
+      </svg>
+    </div>
+    <div class="note"><strong>Key rule:</strong> Every chart component is a pure presenter. No hook or fetch call lives inside a chart. This makes them reusable for the Phase 2 user-selected ticker without modification.</div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title"><span class="section-number">3</span>Data Service Abstraction</div>
+    <pre><span class="cmt">// financeService.ts — the only import used by hooks and components</span>
+<span class="kw">interface</span> <span class="type">FinanceService</span> {
+  getQuote(ticker: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">Quote</span>&gt;;
+  getHistory(ticker: <span class="type">string</span>, window: <span class="type">TimeWindow</span>): <span class="type">Promise</span>&lt;<span class="type">HistoryPoint</span>[]&gt;;
+}
+
+<span class="cmt">// Adapter selected via env flag — never leaks into components</span>
+<span class="kw">const</span> adapter = <span class="kw">import</span>.meta.env.VITE_USE_MOCK
+  ? mockAdapter       <span class="cmt">// static fixtures — active in CI and offline</span>
+  : yahooFinanceAdapter; <span class="cmt">// yahoo-finance2, server-side or via /api proxy</span>
+
+<span class="kw">export const</span> financeService: <span class="type">FinanceService</span> = adapter;</pre>
+    <div class="note"><strong>Yahoo Finance practical note:</strong> <code class="inline">yahoo-finance2</code> works server-side. For browser builds, add a lightweight Express proxy at <code class="inline">finance-app/server/proxy.ts</code> that Vite forwards <code class="inline">/api/finance/*</code> to. Only the adapter's base URL changes — no component code changes required.</div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title"><span class="section-number">4</span>Charting Approach</div>
+    <p style="margin-bottom:12px;font-size:13px;color:#57606a">Recommendation: <strong style="color:#1f2328">Recharts</strong> — React-native, composable, TypeScript-ready, zero config for line/area charts.</p>
+    <table>
+      <thead>
+        <tr><th>Time Window</th><th>Chart Type</th><th>Rationale</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Current Day</strong></td>
+          <td><code>SummaryCard</code> grid</td>
+          <td>Price, change %, volume — no time series needed</td>
+        </tr>
+        <tr>
+          <td><strong>Last 7 Days</strong></td>
+          <td><code>LineChart</code></td>
+          <td>One line per company, shared x-axis for easy comparison</td>
+        </tr>
+        <tr>
+          <td><strong>Last Quarter</strong></td>
+          <td><code>AreaChart</code></td>
+          <td>Fills under each line — better for reading trend magnitude</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title"><span class="section-number">5</span>State Management Strategy</div>
+    <p style="margin-bottom:12px;font-size:13px;color:#57606a">Recommendation: <strong style="color:#1f2328">Zustand</strong> — minimal boilerplate, no Provider wrapping, easy to test in isolation.</p>
+    <pre><span class="kw">interface</span> <span class="type">DashboardStore</span> {
+  tickers:      <span class="type">Ticker</span>[];               <span class="cmt">// DEFAULT_TICKERS from constants</span>
+  activeWindow: <span class="type">TimeWindow</span>;             <span class="cmt">// 'day' | '7d' | 'quarter'</span>
+  quotes:       <span class="type">Record</span>&lt;<span class="type">string</span>, <span class="type">Quote</span>&gt;;
+  histories:    <span class="type">Record</span>&lt;<span class="type">string</span>, <span class="type">HistoryPoint</span>[]&gt;;
+  loadingKeys:  <span class="type">Set</span>&lt;<span class="type">string</span>&gt;;
+  errors:       <span class="type">Record</span>&lt;<span class="type">string</span>, <span class="type">string</span>&gt;;
+
+  setWindow(w: <span class="type">TimeWindow</span>): <span class="type">void</span>;
+  fetchQuotes(): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
+  fetchHistories(): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
+  addTicker(t: <span class="type">string</span>): <span class="type">void</span>;   <span class="cmt">// Phase 2 entry point — already scoped</span>
+}</pre>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title"><span class="section-number">6</span>Error Handling</div>
+    <div class="tier-list">
+      <div class="tier">
+        <div class="tier-badge">1</div>
+        <div class="tier-body">
+          <div class="tier-heading">Network / adapter tier</div>
+          <div class="tier-desc"><code class="inline">yahooFinanceAdapter.ts</code> — catch + rethrow typed <code class="inline">FinanceError</code> with <code class="inline">ticker</code> and <code class="inline">reason</code> fields.</div>
+        </div>
+      </div>
+      <div class="tier">
+        <div class="tier-badge">2</div>
+        <div class="tier-body">
+          <div class="tier-heading">Hook / store tier</div>
+          <div class="tier-desc"><code class="inline">fetchQuotes</code>, <code class="inline">fetchHistories</code> write to <code class="inline">errors[ticker]</code> in the store. Never throw to components.</div>
+        </div>
+      </div>
+      <div class="tier">
+        <div class="tier-badge">3</div>
+        <div class="tier-body">
+          <div class="tier-heading">UI tier</div>
+          <div class="tier-desc"><code class="inline">CompanyCard</code>, <code class="inline">ComparisonPanel</code> read <code class="inline">errors[ticker]</code> from store and show an inline <code class="inline">ErrorBanner</code> if set. An <code class="inline">ErrorBoundary</code> wraps <code class="inline">DashboardPage</code> as a last-resort catch.</div>
+        </div>
+      </div>
+      <div class="tier">
+        <div class="tier-badge">4</div>
+        <div class="tier-body">
+          <div class="tier-heading">Phase 2 — input validation tier</div>
+          <div class="tier-desc"><code class="inline">UserTickerPanel</code> validates the symbol client-side before any network call. Invalid symbols produce a user-facing message without touching the main error store.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title"><span class="section-number">7</span>Test Strategy</div>
+    <table>
+      <thead>
+        <tr><th>Layer</th><th>Tool</th><th>What to test</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Data transforms</strong></td>
+          <td>Jest</td>
+          <td><code>normalizeQuote</code>, <code>normalizeHistory</code> — input / output contracts</td>
+        </tr>
+        <tr>
+          <td><strong>Hooks</strong></td>
+          <td>RTL + Jest</td>
+          <td><code>useQuote</code>, <code>useHistory</code> with mock adapter injected</td>
+        </tr>
+        <tr>
+          <td><strong>Components</strong></td>
+          <td>RTL</td>
+          <td><code>SummaryCard</code>, <code>CompanyCard</code>, <code>ComparisonPanel</code> render + error state</td>
+        </tr>
+        <tr>
+          <td><strong>Store</strong></td>
+          <td>Jest</td>
+          <td><code>setWindow</code>, <code>addTicker</code>, error accumulation</td>
+        </tr>
+        <tr>
+          <td><strong>Integration</strong></td>
+          <td>RTL renderWithProviders</td>
+          <td><code>DashboardPage</code> mounted with mock service — verifies chart and card presence</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="note">The <code class="inline">VITE_USE_MOCK=true</code> flag ensures <strong>no network calls in any test</strong>. The mock data set covers: normal quote, partial/missing fields, and a deliberate error response for error-state assertions.</div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title"><span class="section-number">8</span>Local Validation Steps</div>
+    <pre><span class="kw">cd</span> finance-app
+
+<span class="cmt"># 1. Install</span>
+npm install
+
+<span class="cmt"># 2. Lint</span>
+npm run lint          <span class="cmt"># ESLint + TypeScript strict</span>
+
+<span class="cmt"># 3. Type-check (separate from lint)</span>
+npx tsc --noEmit
+
+<span class="cmt"># 4. Tests — matches CI --runInBand flag</span>
+npm test
+
+<span class="cmt"># 5. Production build — catches import / bundle errors</span>
+npm run build
+
+<span class="cmt"># 6. Optional smoke test</span>
+npm run preview</pre>
+    <div class="note">These five commands exactly mirror <code class="inline">.github/workflows/finance-app-ci.yml</code>. <strong>Green locally = green in CI</strong> is a reliable guarantee before any push.</div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title"><span class="section-number">9</span>GitHub-Driven Feature Evolution</div>
+
+    <p style="font-size:13px;margin-bottom:14px;color:#57606a">The repo's existing GitHub infrastructure already anticipates iterative delivery. Three mechanisms lock this in:</p>
+
+    <div style="margin-bottom:18px">
+      <div style="font-weight:600;font-size:13px;margin-bottom:8px">Branch naming convention</div>
+      <div class="card-row">
+        <div class="card">
+          <div class="card-label">Part 1 delivery</div>
+          <div class="card-value"><code class="inline">feature/initial-finance-dashboard</code></div>
+        </div>
+        <div class="card">
+          <div class="card-label">Part 2 feature</div>
+          <div class="card-value"><code class="inline">feature/user-selected-company-chart</code></div>
+        </div>
+        <div class="card">
+          <div class="card-label">Bob-driven fix</div>
+          <div class="card-value"><code class="inline">bob/fix-chart-normalization</code></div>
+        </div>
+      </div>
+      <div class="note" style="margin-top:10px">CI triggers on <code class="inline">feature/**</code> and <code class="inline">bob/**</code> branches — both conventions are already wired into the workflow.</div>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <div style="font-weight:600;font-size:13px;margin-bottom:8px">Issue → PR traceability</div>
+      <p style="font-size:12.5px;color:#57606a;margin-bottom:8px">Every PR uses <code class="inline">PULL_REQUEST_TEMPLATE.md</code> which requires:</p>
+      <div class="tier-list">
+        <div class="tier" style="padding:10px 14px">
+          <div class="tier-badge" style="background:#57606a;font-size:10px">PR</div>
+          <div class="tier-body"><div class="tier-desc"><strong>Feature Request Alignment</strong> — links the issue number and maps acceptance criteria to the implementation.</div></div>
+        </div>
+        <div class="tier" style="padding:10px 14px">
+          <div class="tier-badge" style="background:#57606a;font-size:10px">CI</div>
+          <div class="tier-body"><div class="tier-desc"><strong>Validation</strong> — must show <code class="inline">npm test</code> + <code class="inline">npm run build</code> output before merge.</div></div>
+        </div>
+        <div class="tier" style="padding:10px 14px">
+          <div class="tier-badge" style="background:#3b82d4;font-size:10px">Bob</div>
+          <div class="tier-body"><div class="tier-desc"><strong>Bob Collaboration Notes</strong> — documents analysis, implementation, validation, and diff review steps Bob performed.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <div style="font-weight:600;font-size:13px;margin-bottom:8px">Architecture choices that make features safe to add</div>
+      <table>
+        <thead><tr><th>Choice</th><th>Why it matters for evolution</th></tr></thead>
+        <tbody>
+          <tr><td><code>financeService.ts</code> abstraction</td><td>Data source swappable without touching any component</td></tr>
+          <tr><td>Zustand <code>addTicker()</code> action</td><td>Phase 2 entry point already scoped in the store interface</td></tr>
+          <tr><td>Pure-presenter charts</td><td><code>UserTickerPanel</code> reuses <code>PriceLineChart</code> with zero changes</td></tr>
+          <tr><td><code>mockData.ts</code> adapter</td><td>New features developed and tested fully offline</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <div style="font-weight:600;font-size:13px;margin-bottom:10px">End-to-end SDLC flow with Bob</div>
+      <div class="flow">
+        <div class="flow-item">GitHub Issue</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">Bob analyzes</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">Bob implements</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">npm test + build</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">Bob /review</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">/create-pr</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">CI validates</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">Maintainer merges</div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="footer">Made with IBM Bob</div>
+
+</div>
+</body>
+</html>
