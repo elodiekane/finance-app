@@ -4,6 +4,7 @@ import { TimeWindowTabs } from '../layout/TimeWindowTabs';
 import { DayView } from './DayView';
 import { WeekView } from './WeekView';
 import { QuarterView } from './QuarterView';
+import { SelectedCompanyPanel } from './SelectedCompanyPanel';
 
 export function DashboardPage() {
   const tickers      = useDashboardStore(s => s.tickers);
@@ -53,6 +54,8 @@ export function DashboardPage() {
       {activeWindow === 'quarter' && (
         <QuarterView {...viewProps} />
       )}
+
+      <SelectedCompanyPanel />
     </div>
   );
 }

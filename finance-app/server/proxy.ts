@@ -42,6 +42,11 @@ function windowToDates(window: TimeWindow): { period1: Date; period2: Date } {
   return { period1: from, period2: now };
 }
 
+/** yahoo-finance2 reports unknown symbols as "Not Found" / "No data found" errors. */
+function isNotFound(message: string): boolean {
+  return /not found|no data found/i.test(message);
+}
+
 // ─── Server ───────────────────────────────────────────────────────────────────
 
 const app  = express();
@@ -76,11 +81,16 @@ app.get('/api/finance/quote/:symbol', async (req, res) => {
         'fiftyTwoWeekLow',
       ],
     });
+    // yahoo-finance2 resolves with undefined for an unknown symbol.
+    if (!result) {
+      res.status(404).json({ error: `No data for symbol ${symbol}` });
+      return;
+    }
     res.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`[proxy] quote/${symbol}: ${message}`);
-    res.status(502).json({ error: message });
+    res.status(isNotFound(message) ? 404 : 502).json({ error: message });
   }
 });
 
@@ -127,7 +137,7 @@ app.get('/api/finance/history/:symbol', async (req, res) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`[proxy] history/${symbol}: ${message}`);
-    res.status(502).json({ error: message });
+    res.status(isNotFound(message) ? 404 : 502).json({ error: message });
   }
 });
 

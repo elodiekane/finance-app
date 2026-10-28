@@ -1,6 +1,7 @@
 import type { Quote, HistoryPoint, TimeWindow } from '../types/finance';
 import { normalizeQuote, normalizeHistory } from '../utils/normalizeQuote';
 import { DEFAULT_TICKERS } from '../constants';
+import { UnsupportedSymbolError } from './errors';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 
@@ -115,6 +116,79 @@ const MOCK_QUOTES: Record<string, Record<string, unknown>> = {
     fiftyTwoWeekHigh:           318.71,
     fiftyTwoWeekLow:            193.00,
   },
+  // ── Extra companies selectable by the user (not part of DEFAULT_TICKERS) ──
+  AAPL: {
+    shortName:                  'Apple Inc.',
+    currency:                   'USD',
+    fullExchangeName:           'NasdaqGS',
+    regularMarketPrice:         189.30,
+    regularMarketChange:        1.10,
+    regularMarketChangePercent: 0.58,
+    regularMarketOpen:          188.40,
+    regularMarketDayHigh:       190.20,
+    regularMarketDayLow:        187.90,
+    regularMarketPreviousClose: 188.20,
+    regularMarketVolume:        52_000_000,
+    regularMarketTime:          1_710_000_000,
+    averageDailyVolume3Month:   58_000_000,
+    marketCap:                  2_930_000_000_000,
+    fiftyTwoWeekHigh:           199.62,
+    fiftyTwoWeekLow:            164.08,
+  },
+  GOOGL: {
+    shortName:                  'Alphabet Inc.',
+    currency:                   'USD',
+    fullExchangeName:           'NasdaqGS',
+    regularMarketPrice:         141.80,
+    regularMarketChange:        -0.60,
+    regularMarketChangePercent: -0.42,
+    regularMarketOpen:          142.20,
+    regularMarketDayHigh:       143.10,
+    regularMarketDayLow:        141.00,
+    regularMarketPreviousClose: 142.40,
+    regularMarketVolume:        24_000_000,
+    regularMarketTime:          1_710_000_000,
+    averageDailyVolume3Month:   26_000_000,
+    marketCap:                  1_770_000_000_000,
+    fiftyTwoWeekHigh:           153.78,
+    fiftyTwoWeekLow:            102.21,
+  },
+  AMZN: {
+    shortName:                  'Amazon.com, Inc.',
+    currency:                   'USD',
+    fullExchangeName:           'NasdaqGS',
+    regularMarketPrice:         178.50,
+    regularMarketChange:        2.20,
+    regularMarketChangePercent: 1.25,
+    regularMarketOpen:          176.60,
+    regularMarketDayHigh:       179.40,
+    regularMarketDayLow:        176.10,
+    regularMarketPreviousClose: 176.30,
+    regularMarketVolume:        41_000_000,
+    regularMarketTime:          1_710_000_000,
+    averageDailyVolume3Month:   45_000_000,
+    marketCap:                  1_850_000_000_000,
+    fiftyTwoWeekHigh:           189.77,
+    fiftyTwoWeekLow:            118.35,
+  },
+  NVDA: {
+    shortName:                  'NVIDIA Corporation',
+    currency:                   'USD',
+    fullExchangeName:           'NasdaqGS',
+    regularMarketPrice:         875.40,
+    regularMarketChange:        12.30,
+    regularMarketChangePercent: 1.43,
+    regularMarketOpen:          865.00,
+    regularMarketDayHigh:       880.20,
+    regularMarketDayLow:        862.50,
+    regularMarketPreviousClose: 863.10,
+    regularMarketVolume:        38_000_000,
+    regularMarketTime:          1_710_000_000,
+    averageDailyVolume3Month:   42_000_000,
+    marketCap:                  2_190_000_000_000,
+    fiftyTwoWeekHigh:           974.00,
+    fiftyTwoWeekLow:            373.56,
+  },
 };
 
 // ─── Seeded pseudo-random history ─────────────────────────────────────────────
@@ -203,7 +277,7 @@ export async function mockGetQuote(symbol: string): Promise<Quote> {
 
   const raw = MOCK_QUOTES[symbol.toUpperCase()];
   if (!raw) {
-    throw new Error(`Unknown ticker: ${symbol}`);
+    throw new UnsupportedSymbolError(symbol);
   }
   return normalizeQuote(symbol.toUpperCase(), raw);
 }
@@ -217,7 +291,7 @@ export async function mockGetHistory(
   const upper = symbol.toUpperCase();
   const raw   = MOCK_QUOTES[upper];
   if (!raw) {
-    throw new Error(`Unknown ticker: ${symbol}`);
+    throw new UnsupportedSymbolError(symbol);
   }
 
   const base = Number(raw.regularMarketPrice);

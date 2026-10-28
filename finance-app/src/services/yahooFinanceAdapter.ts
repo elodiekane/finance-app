@@ -1,5 +1,6 @@
 import type { Quote, HistoryPoint, TimeWindow } from '../types/finance';
 import { normalizeQuote, normalizeHistory } from '../utils/normalizeQuote';
+import { UnsupportedSymbolError } from './errors';
 
 /**
  * Browser-side Yahoo Finance adapter.
@@ -17,8 +18,10 @@ import { normalizeQuote, normalizeHistory } from '../utils/normalizeQuote';
 
 // ─── Internal fetch helper ────────────────────────────────────────────────────
 
-async function fetchProxy<T>(path: string): Promise<T> {
+async function fetchProxy<T>(path: string, symbol: string): Promise<T> {
   const res = await fetch(`/api/finance/${path}`);
+  // The proxy answers 404 when the symbol does not exist or has no data.
+  if (res.status === 404) throw new UnsupportedSymbolError(symbol);
   if (!res.ok) {
     let message: string;
     try {
@@ -37,6 +40,7 @@ async function fetchProxy<T>(path: string): Promise<T> {
 export async function yahooGetQuote(symbol: string): Promise<Quote> {
   const raw = await fetchProxy<Record<string, unknown>>(
     `quote/${encodeURIComponent(symbol.toUpperCase())}`,
+    symbol,
   );
   return normalizeQuote(symbol.toUpperCase(), raw);
 }
@@ -47,6 +51,7 @@ export async function yahooGetHistory(
 ): Promise<HistoryPoint[]> {
   const raw = await fetchProxy<{ rows: Array<Record<string, unknown>> }>(
     `history/${encodeURIComponent(symbol.toUpperCase())}?window=${window}`,
+    symbol,
   );
   // rows are ISO date strings serialised by the proxy
   return normalizeHistory(symbol.toUpperCase(), raw.rows);
