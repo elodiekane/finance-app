@@ -47,6 +47,10 @@ jobs:
     name: Bob-assisted feature workflow guidance
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    # This job has no checkout, so the workflow-level finance-app/ default does not exist here.
+    defaults:
+      run:
+        working-directory: .
 
     steps:
       - name: Explain Bob collaboration workflow
