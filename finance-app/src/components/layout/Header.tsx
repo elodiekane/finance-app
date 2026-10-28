@@ -1,9 +1,13 @@
+import { DataSourceBadge } from './DataSourceBadge';
+import { isMockMode } from '../../services/dataSource';
+
 export function Header() {
   return (
     <div style={styles.inner}>
       <span style={styles.logo}>IBM</span>
       <h1 style={styles.title}>Market Dashboard</h1>
       <span style={styles.subtitle}>Finance Analytics Lab</span>
+      <DataSourceBadge isMock={isMockMode()} />
     </div>
   );
 }
