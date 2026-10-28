@@ -48,3 +48,15 @@ export interface HistoryPoint {
 export type QuoteMap   = Record<string, Quote>;
 export type HistoryMap = Record<string, HistoryPoint[]>;
 export type ErrorMap   = Record<string, string>;
+
+// ─── User-selected company ────────────────────────────────────────────────────
+
+/**
+ * idle     – nothing selected
+ * loading  – fetching quote + history
+ * ready    – data available, chart shown
+ * no-data  – symbol unknown or returned no data (never substituted with another company)
+ * error    – invalid input or a transient failure (network, rate limit)
+ */
+export type SelectedStatus = 'idle' | 'loading' | 'ready' | 'no-data' | 'error';
+
