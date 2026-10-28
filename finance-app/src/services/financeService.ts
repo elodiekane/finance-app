@@ -2,6 +2,7 @@ import type { Quote, HistoryPoint, TimeWindow } from '../types/finance';
 import { mockGetQuote, mockGetHistory } from './mockData';
 import { yahooGetQuote, yahooGetHistory } from './yahooFinanceAdapter';
 import { TtlCache } from '../utils/ttlCache';
+import { isMockMode } from './dataSource';
 
 /**
  * Public finance service.
@@ -17,21 +18,7 @@ import { TtlCache } from '../utils/ttlCache';
  *   Call financeService.clearCache() to force a fresh fetch.
  */
 
-// Read the env flag safely in both Vite (import.meta.env) and Jest (globals injection).
-// ts-jest injects import.meta via the globals config but evaluates it at transform time;
-// wrapping in a function avoids the top-level ESM-vs-CJS timing issue in Jest 30.
-function resolveUseMock(): boolean {
-  try {
-    // In Vite this is statically replaced at build time.
-    // In Jest, ts-jest injects the value via globals['import.meta'].
-    return import.meta.env.VITE_USE_MOCK !== 'false';
-  } catch {
-    // Fallback for environments where import.meta is unavailable (Jest without globals).
-    return true;
-  }
-}
-
-const useMock = resolveUseMock();
+const useMock = isMockMode();
 
 // ─── Cache instances ──────────────────────────────────────────────────────────
 
